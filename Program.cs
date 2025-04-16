@@ -17,7 +17,11 @@ await RunMqttServer(args);
 
 async Task RunMqttServer(string[] args)
 {
-    ConfigureLogging();
+    Log.Logger = new LoggerConfiguration()
+        .MinimumLevel.Debug()
+        .WriteTo.Console(new RenderedCompactJsonFormatter())
+        // .WriteTo.File(new RenderedCompactJsonFormatter(), "log.json", rollingInterval: RollingInterval.Hour)
+        .CreateLogger();
 
     // Create and configure MQTT server
     using var mqttServer = new MqttServerFactory()
@@ -34,15 +38,6 @@ async Task RunMqttServer(string[] args)
 
     // Configure graceful shutdown
     await SetupGracefulShutdown(mqttServer, lifetime, host);
-}
-
-void ConfigureLogging()
-{
-    Log.Logger = new LoggerConfiguration()
-        .MinimumLevel.Debug()
-        .WriteTo.Console(new RenderedCompactJsonFormatter())
-        // .WriteTo.File(new RenderedCompactJsonFormatter(), "log.json", rollingInterval: RollingInterval.Hour)
-        .CreateLogger();
 }
 
 MqttServerOptions BuildMqttServerOptions()
@@ -127,13 +122,14 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
 
 Task HandleInterceptingSubscription(InterceptingSubscriptionEventArgs args)
 {
-    args.ProcessSubscription = true; // Add filtering logic here if needed
+    // Add filtering logic here if needed
+    args.ProcessSubscription = true;
     return Task.CompletedTask;
 }
 
 Task HandleValidatingConnection(ValidatingConnectionEventArgs args)
 {
-    // Add authentication logic here
+    // Add connection / authentication logic here if needed
     args.ReasonCode = MqttConnectReasonCode.Success;
     return Task.CompletedTask;
 }
@@ -196,7 +192,7 @@ async Task SetupGracefulShutdown(MqttServer mqttServer, IHostApplicationLifetime
     ended.Set();
 
     lifetime.StopApplication();
-    host.WaitForShutdownAsync().Wait();
+    await host.WaitForShutdownAsync();
 }
 
 static IHostBuilder CreateHostBuilder(string[] args)
