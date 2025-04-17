@@ -62,9 +62,18 @@ services:
 
 ## Configuration Options
 
+- **Certificate**: Mount your PFX certificate file to `/app/certificate.pfx` in the container or preferably modify it in the parent folder after git cloning.
+- **Ports**: The application uses  8883 for SSL MQTT (default).
 
-- **Certificate**: Mount your PFX certificate file to `/app/certificate.pfx` in the container
-- **Ports**: The application uses  8883 for SSL MQTT (default) and port 1883 for standard MQTT
+## Ideas for MQTT mesh moderation
+
+- Rate-limiting a packet we've heard before
+- Rate-limiting packets per node
+- "Zero hopping" certain packets
+- Blocking unknown topics or undecryptable packets (from unknown channels)
+- Blocking or rate-limiting certain portnums
+- Fail2ban style connection moderation
+- Banning of known bad actors list
 
 ## Troubleshooting
 

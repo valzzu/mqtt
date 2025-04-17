@@ -23,7 +23,6 @@ async Task RunMqttServer(string[] args)
         // .WriteTo.File(new RenderedCompactJsonFormatter(), "log.json", rollingInterval: RollingInterval.Hour)
         .CreateLogger();
 
-    // Create and configure MQTT server
     using var mqttServer = new MqttServerFactory()
         .CreateMqttServer(BuildMqttServerOptions());
     ConfigureMqttServer(mqttServer);
@@ -33,7 +32,6 @@ async Task RunMqttServer(string[] args)
     await host.StartAsync();
     var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
 
-    // Start MQTT server
     await mqttServer.StartAsync();
 
     // Configure graceful shutdown
