@@ -1,6 +1,6 @@
 # Meshtastic MQTT Broker Boilerplate
 
-This project provides an MQTT broker boilerplate specifically designed for Meshtastic mesh networks. It handles encrypted mesh packets, validates messages, and can be configured to run with SSL.
+This project provides an MQTT broker boilerplate specifically designed for Meshtastic mesh network moderation. It handles encrypted mesh packets, validates messages, and can be configured to run with SSL.
 
 ## Features
 
