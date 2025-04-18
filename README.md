@@ -73,7 +73,7 @@ services:
 - Blocking unknown topics or undecryptable packets (from unknown channels)
 - Blocking or rate-limiting certain portnums
 - Fail2ban style connection moderation
-- Banning of known bad actors list
+- Banning from known bad actors list
 
 ## Troubleshooting
 
