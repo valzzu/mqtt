@@ -59,7 +59,7 @@ MqttServerOptions BuildMqttServerOptions()
 
     var options = new MqttServerOptionsBuilder()
         .WithDefaultEndpoint()
-        .WithDefaultEndpointPort(8080)
+        .WithDefaultEndpointPort(1883)
         .Build();
 
 
