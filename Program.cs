@@ -42,22 +42,28 @@ MqttServerOptions BuildMqttServerOptions()
 {
     var currentPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
 
-    #pragma warning disable SYSLIB0057 // Type or member is obsolete
-    var certificate = new X509Certificate2(
-        Path.Combine(currentPath, "certificate.pfx"),
-        "large4cats",
-        X509KeyStorageFlags.Exportable);
-    #pragma warning restore SYSLIB0057
+    //#pragma warning disable SYSLIB0057 // Type or member is obsolete
+    //var certificate = new X509Certificate2(
+    //    Path.Combine(currentPath, "certificate.pfx"),
+    //    "large4cats",
+    //    X509KeyStorageFlags.Exportable);
+    //#pragma warning restore SYSLIB0057
+
+    //var options = new MqttServerOptionsBuilder()
+    //    .WithoutDefaultEndpoint()
+    //    .WithEncryptedEndpoint()
+    //    .WithEncryptedEndpointPort(8883)
+    //    .WithEncryptionCertificate(certificate.Export(X509ContentType.Pfx))
+    //    .WithEncryptionSslProtocol(SslProtocols.Tls12)
+    //    .Build();
 
     var options = new MqttServerOptionsBuilder()
-        .WithoutDefaultEndpoint()
-        .WithEncryptedEndpoint()
-        .WithEncryptedEndpointPort(8883)
-        .WithEncryptionCertificate(certificate.Export(X509ContentType.Pfx))
-        .WithEncryptionSslProtocol(SslProtocols.Tls12)
+        .WithDefaultEndpoint()
+        .WithDefaultEndpointPort(1883)
         .Build();
 
-    Log.Logger.Information("Using SSL certificate for MQTT server");
+
+    //Log.Logger.Information("Using SSL certificate for MQTT server");
     return options;
 }
 
@@ -94,11 +100,11 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
 
         var data = DecryptMeshPacket(serviceEnvelope);
 
-        // Uncomment to block unrecognized packets
+        // uncomment to block unrecognized packets
         // if (data == null)
         // {
-        //     Log.Logger.Warning("Service envelope does not contain a valid packet. Blocking packet");
-        //     args.ProcessPublish = false;
+        //     log.logger.warning("service envelope does not contain a valid packet. blocking packet");
+        //     args.processpublish = false;
         //     return;
         // }
 
@@ -127,8 +133,20 @@ Task HandleInterceptingSubscription(InterceptingSubscriptionEventArgs args)
 
 Task HandleValidatingConnection(ValidatingConnectionEventArgs args)
 {
-    // Add connection / authentication logic here if needed
-    args.ReasonCode = MqttConnectReasonCode.Success;
+
+    if(args.UserName == "meshdev" && args.Password == "large4cats")
+    {
+        args.ReasonCode = MqttConnectReasonCode.Success;
+        Log.Logger.Information("client {@ID} connected succesfully ", args.ClientId);
+
+        return Task.CompletedTask;
+    }
+
+
+    args.ReasonCode = MqttConnectReasonCode.BadUserNameOrPassword;
+
+    Log.Logger.Information("client {@ID} failed to connect with reason ", args.ClientId, args.ReasonCode);
+
     return Task.CompletedTask;
 }
 
