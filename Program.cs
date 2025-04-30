@@ -101,12 +101,14 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
         var data = DecryptMeshPacket(serviceEnvelope);
 
         // uncomment to block unrecognized packets
-        // if (data == null)
-        // {
-        //     log.logger.warning("service envelope does not contain a valid packet. blocking packet");
-        //     args.processpublish = false;
-        //     return;
-        // }
+        if (data == null)
+        {
+            Log.Logger.Warning("service envelope does not contain a valid packet. blocking packet");
+            args.ProcessPublish = false;
+            return;
+        }
+
+        Log.Logger.Debug("data of sent telemetry {@data}", data);
 
         LogReceivedMessage(args.ApplicationMessage.Topic, args.ClientId, data);
         args.ProcessPublish = true;
