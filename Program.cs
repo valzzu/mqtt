@@ -135,11 +135,13 @@ Task HandleInterceptingSubscription(InterceptingSubscriptionEventArgs args)
 
 Task HandleValidatingConnection(ValidatingConnectionEventArgs args)
 {
+
+    Console.WriteLine($"Client {args.ClientId} is trying to connect with username {args.UserName} and password {args.Password}");
     //block unwated connections eg. shellyplus1pm-*
-    if (args.ClientId.StartsWith("shellyplus1pm-"))
+    if (args.ClientId.StartsWith("shellyplus1pm-", StringComparison.OrdinalIgnoreCase))
     {
         args.ReasonCode = MqttConnectReasonCode.NotAuthorized;
-        Log.Logger.Information("client {@ID} failed to connect with reason ", args.ClientId, args.ReasonCode);
+        Log.Logger.Information("Connection rejected: Client {ClientId} is a Shelly Plus 1PM device", args.ClientId);
         return Task.CompletedTask;
     }
 
