@@ -103,6 +103,7 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
             //zero hopping for longfast
             Log.Logger.Debug("LongFast packet detected, setting hopstart to 0");
             serviceEnvelope.Packet.HopLimit = 0;
+            args.ProcessPublish = false;
         }
 
        
