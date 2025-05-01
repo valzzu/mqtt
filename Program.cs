@@ -98,7 +98,13 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
         // Spot for any async operations we might want to perform
         await Task.FromResult(0);
 
+       
+
         var data = DecryptMeshPacket(serviceEnvelope);
+
+        Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
+
+        Console.WriteLine($"Decrypted packet: {data?.Payload.ToStringUtf8()}");
 
         // uncomment to block unrecognized packets
         if (data == null)
@@ -107,8 +113,6 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
             args.ProcessPublish = false;
             return;
         }
-
-        Log.Logger.Debug("data of sent telemetry {@data}", data);
 
         LogReceivedMessage(args.ApplicationMessage.Topic, args.ClientId, data);
         args.ProcessPublish = true;
@@ -135,13 +139,11 @@ Task HandleInterceptingSubscription(InterceptingSubscriptionEventArgs args)
 
 Task HandleValidatingConnection(ValidatingConnectionEventArgs args)
 {
-
-    Console.WriteLine($"Client {args.ClientId} is trying to connect with username {args.UserName} and password {args.Password}");
     //block unwated connections eg. shellyplus1pm-*
     if (args.ClientId.StartsWith("shellyplus1pm-", StringComparison.OrdinalIgnoreCase))
     {
         args.ReasonCode = MqttConnectReasonCode.NotAuthorized;
-        Log.Logger.Information("Connection rejected: Client {ClientId} is a Shelly Plus 1PM device", args.ClientId);
+        //Log.Logger.Information("Connection rejected: Client {ClientId} is a Shelly Plus 1PM device", args.ClientId);
         return Task.CompletedTask;
     }
 
