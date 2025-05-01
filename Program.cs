@@ -101,9 +101,10 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
         if(serviceEnvelope.ChannelId == "LongFast")
         {
             //zero hopping for longfast
-            Log.Logger.Debug("LongFast packet detected, setting hopstart to 0");
+            Log.Logger.Debug("LongFast packet detected, setting hoplimit to 0");
             serviceEnvelope.Packet.HopLimit = 0;
             args.ProcessPublish = false;
+            return;
         }
 
        
