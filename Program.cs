@@ -98,6 +98,13 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
         // Spot for any async operations we might want to perform
         await Task.FromResult(0);
 
+        if(serviceEnvelope.ChannelId == "LongFast")
+        {
+            //zero hopping for longfast
+            Log.Logger.Debug("LongFast packet detected, setting hopstart to 0");
+            serviceEnvelope.Packet.HopStart = 0;
+        }
+
        
 
         var data = DecryptMeshPacket(serviceEnvelope);
@@ -144,6 +151,11 @@ Task HandleValidatingConnection(ValidatingConnectionEventArgs args)
     {
         args.ReasonCode = MqttConnectReasonCode.NotAuthorized;
         //Log.Logger.Information("Connection rejected: Client {ClientId} is a Shelly Plus 1PM device", args.ClientId);
+        return Task.CompletedTask;
+    }
+    if (args.ClientId == "2Ujeregc9mQgWt2IBOzzaM")
+    {
+        args.ReasonCode = MqttConnectReasonCode.NotAuthorized;
         return Task.CompletedTask;
     }
 
