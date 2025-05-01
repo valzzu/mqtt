@@ -98,14 +98,8 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
         // Spot for any async operations we might want to perform
         await Task.FromResult(0);
 
-        if(serviceEnvelope.ChannelId == "LongFast")
-        {
-            //zero hopping for longfast
-            Log.Logger.Debug("LongFast packet detected, setting hoplimit to 0");
-            serviceEnvelope.Packet.HopLimit = 0;
-            args.ProcessPublish = false;
-            return;
-        }
+
+
 
        
 
@@ -114,6 +108,18 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
         Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
 
         Console.WriteLine($"Decrypted packet: {data?.Payload.ToStringUtf8()}");
+
+        if (serviceEnvelope.ChannelId == "LongFast" && serviceEnvelope.Packet.HopLimit > 0)
+        {
+            //zero hopping for longfast
+            Log.Logger.Debug("LongFast packet detected, setting hoplimit to 0");
+            serviceEnvelope.Packet.HopLimit = 1;
+        }
+
+        Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
+
+        Console.WriteLine($"Decrypted packet: {data?.Payload.ToStringUtf8()}");
+
 
         // uncomment to block unrecognized packets
         if (data == null)
