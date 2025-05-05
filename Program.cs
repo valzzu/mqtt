@@ -109,6 +109,11 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
 
         Console.WriteLine($"Decrypted packet: {data?.Payload.ToStringUtf8()}");
 
+        //check if hopstart exists, if it doesent create and set it to 3
+        if (serviceEnvelope.Packet?.HopStart < 1)
+            serviceEnvelope.Packet.HopStart = 3;
+
+
         if (serviceEnvelope.ChannelId == "LongFast" && serviceEnvelope.Packet.HopLimit > 0)
         {
             //zero hopping for longfast
