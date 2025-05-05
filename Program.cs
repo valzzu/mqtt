@@ -12,6 +12,7 @@ using Meshtastic;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
+using System.Buffers;
 
 await RunMqttServer(args);
 
@@ -59,7 +60,7 @@ MqttServerOptions BuildMqttServerOptions()
 
     var options = new MqttServerOptionsBuilder()
         .WithDefaultEndpoint()
-        .WithDefaultEndpointPort(1883)
+        .WithDefaultEndpointPort(8888)
         .Build();
 
 
@@ -107,23 +108,23 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
 
         Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
 
-        Console.WriteLine($"Decrypted packet: {data?.Payload.ToStringUtf8()}");
-
-        //check if hopstart exists, if it doesent create and set it to 3
-        if (serviceEnvelope.Packet?.HopStart < 1)
-            serviceEnvelope.Packet.HopStart = 3;
+        Console.WriteLine($"Decrypted packet: {data}");
 
 
-        if (serviceEnvelope.ChannelId == "LongFast" && serviceEnvelope.Packet.HopLimit > 0)
+
+        if (serviceEnvelope.ChannelId == "LongFast" && serviceEnvelope.Packet?.HopLimit > 0)
         {
             //zero hopping for longfast
             Log.Logger.Debug("LongFast packet detected, setting hoplimit to 0");
-            serviceEnvelope.Packet.HopLimit = 1;
-        }
+            serviceEnvelope.Packet.HopLimit = 0;
 
+            args.ApplicationMessage.Payload = new ReadOnlySequence<byte>(serviceEnvelope.ToByteArray());
+
+        }
+        var data2 = DecryptMeshPacket(serviceEnvelope);
         Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
 
-        Console.WriteLine($"Decrypted packet: {data?.Payload.ToStringUtf8()}");
+        Console.WriteLine($"Decrypted packet: {data2}");
 
 
         // uncomment to block unrecognized packets
