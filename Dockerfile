@@ -12,6 +12,8 @@ RUN dotnet publish -c Release -o /app
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/runtime:9.0
 WORKDIR /app
+
+# Copy published output
 COPY --from=build /app ./
 
 # Expose ports

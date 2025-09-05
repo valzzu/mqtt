@@ -1,0 +1,15 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Meshtastic Dashboard</title>
+</head>
+<body>
+<h1>MQTT Dashboard</h1>
+<div id="latest">Loading...</div>
+<script>
+    fetch('/latest')
+        .then(res => res.text())
+        .then(text => document.getElementById('latest').innerText = text);
+</script>
+</body>
+</html>

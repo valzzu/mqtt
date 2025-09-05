@@ -13,9 +13,16 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
 using System.Buffers;
+using System.Collections;
+using System.Data;
+using Meshtastic.Mqtt;
+using Npgsql;
 
+var connString = "Host=db;Port=5332;Username=admin;Password=admin;Database=meshtastic";
+await using var dataSource  =  NpgsqlDataSource.Create(connString);
+
+var webServer = new WebServer();
 await RunMqttServer(args);
-
 async Task RunMqttServer(string[] args)
 {
     Log.Logger = new LoggerConfiguration()
@@ -34,9 +41,15 @@ async Task RunMqttServer(string[] args)
     var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
 
     await mqttServer.StartAsync();
+    
+    Console.WriteLine("MQTT server started");
+    
+    webServer.Start();
 
-    // Configure graceful shutdown
-    await SetupGracefulShutdown(mqttServer, lifetime, host);
+    
+    await SetupGracefulShutdown(mqttServer, webServer, lifetime, host);
+    
+
 }
 
 MqttServerOptions BuildMqttServerOptions()
@@ -106,9 +119,9 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
 
         var data = DecryptMeshPacket(serviceEnvelope);
 
-        Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
-
-        Console.WriteLine($"Decrypted packet: {data}");
+        // Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
+        //
+        // Console.WriteLine($"Decrypted packet: {data}");
 
 
 
@@ -122,9 +135,9 @@ async Task HandleInterceptingPublish(InterceptingPublishEventArgs args)
 
         }
         var data2 = DecryptMeshPacket(serviceEnvelope);
-        Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
-
-        Console.WriteLine($"Decrypted packet: {data2}");
+        // Console.WriteLine($"Serviceenvelope: {serviceEnvelope}");
+        //
+        // Console.WriteLine($"Decrypted packet: {data2}");
 
 
         // uncomment to block unrecognized packets
@@ -189,6 +202,7 @@ Task HandleValidatingConnection(ValidatingConnectionEventArgs args)
     return Task.CompletedTask;
 }
 
+
 bool IsValidServiceEnvelope(ServiceEnvelope serviceEnvelope)
 {
     return !(String.IsNullOrWhiteSpace(serviceEnvelope.ChannelId) ||
@@ -213,6 +227,9 @@ void LogReceivedMessage(string topic, string clientId, Data? data)
         Log.Logger.Information("Received packet on topic {@Topic} from {@ClientId} with port number: {@Portnum}",
             topic, clientId, data?.Portnum);
     }
+    Console.WriteLine(data?.Portnum);
+    
+    
 }
 
 static Data? DecryptMeshPacket(ServiceEnvelope serviceEnvelope)
@@ -227,35 +244,43 @@ static Data? DecryptMeshPacket(ServiceEnvelope serviceEnvelope)
     return null;
 }
 
-async Task SetupGracefulShutdown(MqttServer mqttServer, IHostApplicationLifetime lifetime, IHost host)
+
+async Task SetupGracefulShutdown(MqttServer mqttServer, WebServer webServer, IHostApplicationLifetime lifetime, IHost host)
 {
-    var ended = new ManualResetEventSlim();
-    var starting = new ManualResetEventSlim();
-
-    AssemblyLoadContext.Default.Unloading += ctx =>
+    
+    lifetime.ApplicationStopping.Register(() =>
     {
-        starting.Set();
-        Log.Logger.Debug("Waiting for completion");
-        ended.Wait();
-    };
+        Log.Logger.Information("Graceful shutdown initiated");
 
-    starting.Wait();
+        try
+        {
 
-    Log.Logger.Debug("Received signal gracefully shutting down");
-    await mqttServer.StopAsync();
-    Thread.Sleep(500);
-    ended.Set();
+            // Stop MQTT server
+            mqttServer.StopAsync().GetAwaiter().GetResult();
+            Console.WriteLine("MQTT server stopped");
 
-    lifetime.StopApplication();
+            // Stop WebServer
+            webServer.Stop();
+            Console.WriteLine("WebServer stopped");
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error(ex, "Error during shutdown");
+        }
+    });
     await host.WaitForShutdownAsync();
+    
 }
+
 
 static IHostBuilder CreateHostBuilder(string[] args)
 {
+    var cs = "Host=db:5432;Username=admin;Password=admin;Database=meshtastic";
     return Host.CreateDefaultBuilder(args)
         .UseConsoleLifetime()
         .ConfigureServices((hostContext, services) =>
         {
             services.AddSingleton(Console.Out);
+            services.AddHostedService(sp => new UptimeHostedService(cs));
         });
 }
